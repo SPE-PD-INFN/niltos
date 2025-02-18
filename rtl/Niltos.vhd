@@ -29,6 +29,9 @@ use surf.Code8b10bPkg.all;
 
 library niltos;
 
+library unisim;
+use unisim.vcomponents.all;
+
 entity Niltos is
   generic (
     TPD_G                : time                   := 1 ns;
@@ -49,9 +52,7 @@ entity Niltos is
     -- Reference Signals
     clk125MHz      : in  sl;
     rst125MHz      : in  sl;
-    clk156MHz      : in  sl;
-    rst156MHz      : in  sl;
-    clk625MHz      : in  sl;
+    clkNoBuf625MHz : in  sl;
     -- Status Interface
     linkUp         : out sl;
     singleLinkUp   : out slv(NUM_LANES_G-1 downto 0);
@@ -127,6 +128,8 @@ architecture rtl of Niltos is
   signal rxR   : RxRegType := RX_REG_INIT_C;
   signal rxRin : RxRegType;
 
+  signal s_clk156MHz    : sl;
+  signal s_clk625MHz    : sl;
   signal s_txData       : slv((8*NUM_LANES_G)-1 downto 0);
   signal s_rxData       : slv((8*NUM_LANES_G)-1 downto 0);
   signal s_singleLinkUp : slv(NUM_LANES_G-1 downto 0);
@@ -135,6 +138,27 @@ architecture rtl of Niltos is
   signal s_txEn         : slv(NUM_LANES_G-1 downto 0);
 
 begin  -- architecture rtl
+
+  -----------------------------------------------------------------------------
+  -- Clocking
+  -----------------------------------------------------------------------------
+  -- CLKDIV
+  BUFGCE_DIV_inst : BUFGCE_DIV
+    generic map (
+      BUFGCE_DIVIDE => 4,
+      SIM_DEVICE    => SIM_DEVICE_G
+      )
+    port map (
+      O   => s_clk156MHz,               -- 1-bit output: Buffer
+      CE  => '1',                       -- 1-bit input: Buffer enable
+      CLR => '0',                       -- 1-bit input: Asynchronous clear
+      I   => clkNoBuf625MHz             -- 1-bit input: Buffer
+      );
+
+  BUFG_INST : BUFG
+    port map (
+      I => clkNoBuf625MHz,
+      O => s_clk625MHz);
 
   GEN_SALT_LANES : for i in 0 to NUM_LANES_G-1 generate
     NiltosLane_1 : entity niltos.NiltosLane
@@ -153,9 +177,9 @@ begin  -- architecture rtl
         rxN            => rxN(i),
         clk125MHz      => clk125MHz,
         rst125MHz      => rst125MHz,
-        clk156MHz      => clk156MHz,
-        rst156MHz      => rst156MHz,
-        clk625MHz      => clk625MHz,
+        clk156MHz      => s_clk156MHz,
+        rst156MHz      => '0',
+        clk625MHz      => s_clk625MHz,
         linkUp         => s_singleLinkUp(i),
         enUsrDlyCfg    => enUsrDlyCfg,
         usrDlyCfg      => usrDlyCfg,
