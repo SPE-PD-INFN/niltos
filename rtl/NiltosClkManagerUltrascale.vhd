@@ -332,7 +332,7 @@ begin
       port map (
         I  => ClkInP,
         IB => clkInN,
-        O  => clkIn)
+        O  => clkIn);
   end generate InputBufDsGen;
 
   InputGen : if (not DIFF_INPUT_G) generate
@@ -367,7 +367,7 @@ begin
         I => clkOutMmcm(i),
         O => clkOutLoc(i));
     clkOut(i)      <= clkOutLoc(i);
-    noBufClkOut(i) <= clkOutMmcm(i)
+    noBufClkOut(i) <= clkOutMmcm(i);
   end generate;
 
   locked <= lockedLoc;

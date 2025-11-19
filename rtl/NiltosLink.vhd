@@ -6,7 +6,7 @@
 -- Author     : Filippo Marini  <filippo.marini@pd.infn.it>
 -- Company    : INFN Padova
 -- Created    : 2025-02-11
--- Last update: 2025-02-18
+-- Last update: 2025-02-19
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -28,11 +28,12 @@ use surf.StdRtlPkg.all;
 use surf.Code8b10bPkg.all;
 
 library niltos;
+use niltos.NiltosPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
 
-entity Niltos is
+entity NiltosLink is
   generic (
     TPD_G                : time                   := 1 ns;
     NUM_LANES_G          : positive               := 4;
@@ -52,7 +53,9 @@ entity Niltos is
     -- Reference Signals
     clk125MHz      : in  sl;
     rst125MHz      : in  sl;
-    clkNoBuf625MHz : in  sl;
+    -- clkNoBuf625MHz : in  sl;
+    clk625MHz : in sl;
+    clk156MHz : in sl;
     -- Status Interface
     linkUp         : out sl;
     singleLinkUp   : out slv(NUM_LANES_G-1 downto 0);
@@ -69,9 +72,9 @@ entity Niltos is
     rxEn           : out sl;
     rxErr          : out sl;
     rxData         : out slv((8*NUM_LANES_G)-1 downto 0));
-end Niltos;
+end NiltosLink;
 
-architecture rtl of Niltos is
+architecture rtl of NiltosLink is
 
   constant SR_WAIT_C : positive := SHIFT_ARRAY_LENGTH_G * 2;
 
@@ -143,25 +146,25 @@ begin  -- architecture rtl
   -- Clocking
   -----------------------------------------------------------------------------
   -- CLKDIV
-  BUFGCE_DIV_inst : BUFGCE_DIV
-    generic map (
-      BUFGCE_DIVIDE => 4,
-      SIM_DEVICE    => SIM_DEVICE_G
-      )
-    port map (
-      O   => s_clk156MHz,               -- 1-bit output: Buffer
-      CE  => '1',                       -- 1-bit input: Buffer enable
-      CLR => '0',                       -- 1-bit input: Asynchronous clear
-      I   => clkNoBuf625MHz             -- 1-bit input: Buffer
-      );
+  -- BUFGCE_DIV_inst : BUFGCE_DIV
+  --   generic map (
+  --     BUFGCE_DIVIDE => 4,
+  --     SIM_DEVICE    => SIM_DEVICE_G
+  --     )
+  --   port map (
+  --     O   => s_clk156MHz,               -- 1-bit output: Buffer
+  --     CE  => '1',                       -- 1-bit input: Buffer enable
+  --     CLR => '0',                       -- 1-bit input: Asynchronous clear
+  --     I   => clkNoBuf625MHz             -- 1-bit input: Buffer
+  --     );
 
-  BUFG_INST : BUFG
-    port map (
-      I => clkNoBuf625MHz,
-      O => s_clk625MHz);
+  -- BUFG_INST : BUFG
+  --   port map (
+  --     I => clkNoBuf625MHz,
+  --     O => s_clk625MHz);
 
   GEN_SALT_LANES : for i in 0 to NUM_LANES_G-1 generate
-    NiltosLane_1 : entity niltos.NiltosLane
+    NiltosLane_1 : entity work.NiltosLane
       generic map (
         TPD_G           => TPD_G,
         SIMULATION_G    => SIMULATION_G,
@@ -177,9 +180,9 @@ begin  -- architecture rtl
         rxN            => rxN(i),
         clk125MHz      => clk125MHz,
         rst125MHz      => rst125MHz,
-        clk156MHz      => s_clk156MHz,
+        clk156MHz      => clk156MHz,
         rst156MHz      => '0',
-        clk625MHz      => s_clk625MHz,
+        clk625MHz      => clk625MHz,
         linkUp         => s_singleLinkUp(i),
         enUsrDlyCfg    => enUsrDlyCfg,
         usrDlyCfg      => usrDlyCfg,

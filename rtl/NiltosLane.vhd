@@ -6,7 +6,7 @@
 -- Author     : Filippo Marini  <filippo.marini@pd.infn.it>
 -- Company    : INFN Padova
 -- Created    : 2025-02-10
--- Last update: 2025-02-11
+-- Last update: 2025-02-18
 -- Platform   : 
 -- Standard   : VHDL'93/02
 -------------------------------------------------------------------------------
@@ -23,6 +23,9 @@ use ieee.std_logic_1164.all;
 
 library surf;
 use surf.StdRtlPkg.all;
+
+library niltos;
+use niltos.NiltosPkg.all;
 
 entity NiltosLane is
   generic (
